@@ -7,7 +7,7 @@ contract Warehouse {
     string typeOfTask; // pick, pack .. etc
     string containerId;
     string item;
-    string needQuantity;
+    uint needQuantity;
     Status status;
     address user;
     bool exist; // to determine if map contains this taskDetail
@@ -36,14 +36,23 @@ contract Warehouse {
     currentTask.user = msg.sender;
   }
 
-  function verifyItem(string currentTask, string taskId, string itemId) public {
-    // if (tasks[taskId].item != item){
-    //   revert(); // the item must be part of the task
-    // }
+  function verifyItem(string calldata taskId, string calldata itemId) public view {
 
-    // if () {
-    //   revert(); // must have enough of item in inventory
-    // }
+    if (keccak256(abi.encodePacked(tasks[taskId].item)) != 
+                  keccak256(abi.encodePacked(itemId))) {
+      revert(); // the item must be part of the task
+    }
+  }
+
+  function verifyQuantity(uint quantity, string calldata itemId) public view {
+    if (inventory[itemId] < quantity) {
+      revert();
+    }
+
+    if (tasks[itemId].needQuantity < quantity)
+    {
+      revert(); // too many item 
+    }
   }
 
   function addInventory(string calldata item, uint quantity) public {

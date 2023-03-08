@@ -16,13 +16,13 @@ contract('Warehouse', (accounts) => {
   it("Should create task", async () => {
     const warehouseInstance = await Warehouse.deployed();
 
-    let tasksDetail = ["taskDetail", "PICK", "Lpn_01","Iphone","1", "0", accounts[0], true]
+    let tasksDetail = ["taskDetail", "PICK", "Lpn_01","Iphone","1", "0", accounts[0], false]
     await warehouseInstance.createTask(TASK_ID, tasksDetail)
     try {
       await warehouseInstance.createTask(TASK_ID, tasksDetail)
       assert.fail("should not create duplicate task")
     } catch(error) {
-      assert("taskId is already in system", error.reason)
+      assert.equal("taskId is already in system", error.reason)
     }
   });
 
@@ -33,25 +33,41 @@ contract('Warehouse', (accounts) => {
 
   it("Should assert on non existant task", async () => {
     const warehouseInstance = await Warehouse.deployed();
+    let acutal = null
     try {
       await warehouseInstance.startTask("task_02")
-      assert.fail("task is not available to start")
     }
     catch(error) {
-      assert.equal(error.data.message, "revert")
+      actual = error.data.message
     }
+    assert.equal(actual, "revert")
   });
 
   it("Should assert on starting task in progress", async () => {
     const warehouseInstance = await Warehouse.deployed();
+    let actual = null
     try {
-      await warehouseInstance.startTask("TASK_ID")
-      assert.fail("Started task in progress")
+      await warehouseInstance.startTask(TASK_ID)
     } 
     catch (error) {
-      assert.equal(error.data.message, "revert")
+      actual = error.data.message
     }
+
+    assert.equal(actual, "revert")
+  });
+
+  it ("Should not revert on correct scan", async () => {
+    // const warehouseInstance = await Warehouse.deployed();
+    // await warehouseInstance.verifyItem()
   })
+
+  // it("Should revert on wrong item scaned", async () => {
+  //   const warehouseInstance = await Warehouse.deployed();
+  // });
+
+  // it("should revert on no inventoyt for item", async () => {
+
+  // })
 
   
 });
