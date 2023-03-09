@@ -16,7 +16,7 @@ contract('Warehouse', (accounts) => {
   it("Should create task", async () => {
     const warehouseInstance = await Warehouse.deployed();
 
-    let tasksDetail = ["taskDetail", "PICK", "Lpn_01","Iphone","1", "0", accounts[0], false]
+    let tasksDetail = ["taskDetail", "PICK", "Lpn_01","Iphone","3", "0", accounts[0], false]
     await warehouseInstance.createTask(TASK_ID, tasksDetail)
     try {
       await warehouseInstance.createTask(TASK_ID, tasksDetail)
@@ -31,43 +31,65 @@ contract('Warehouse', (accounts) => {
       await warehouseInstance.startTask(TASK_ID)
   })
 
-  it("Should assert on non existant task", async () => {
+  it("Should assert on starting a non existant task", async () => {
     const warehouseInstance = await Warehouse.deployed();
     let acutal = null
     try {
       await warehouseInstance.startTask("task_02")
     }
     catch(error) {
-      actual = error.data.message
+      assert.equal(error.data.message, "revert")
+      return
     }
-    assert.equal(actual, "revert")
+    assert.fail("Did not fail on starting non existant tas")
   });
 
   it("Should assert on starting task in progress", async () => {
     const warehouseInstance = await Warehouse.deployed();
-    let actual = null
     try {
       await warehouseInstance.startTask(TASK_ID)
     } 
     catch (error) {
-      actual = error.data.message
+      assert.equal( error.data.message, "revert")
+      return
     }
-
-    assert.equal(actual, "revert")
+    assert.fail("Did not fail on starting task in progress")
   });
 
   it ("Should not revert on correct scan", async () => {
-    // const warehouseInstance = await Warehouse.deployed();
-    // await warehouseInstance.verifyItem()
+    const warehouseInstance = await Warehouse.deployed();
+    let result = await warehouseInstance.verifyItem(TASK_ID, "Iphone")
+    assert.equal(true, result)
   })
 
-  // it("Should revert on wrong item scaned", async () => {
-  //   const warehouseInstance = await Warehouse.deployed();
-  // });
+  it("Should revert on wrong item scanned", async () => {
+    const warehouseInstance = await Warehouse.deployed();
+    let success = false
+    try {
+      success =  await warehouseInstance.verifyItem(TASK_ID, "Nokia")
+    } catch (error) {
+      success = false
+    }
+    assert.equal(false, success)
+  });
 
-  // it("should revert on no inventoyt for item", async () => {
+  it("should not revert on valid quantity", async () => {
+    const warehouseInstance = await Warehouse.deployed();
+    await warehouseInstance.verifyQuantity(2, TASK_ID, "Iphone")
+    let actualNeedQuant = (await warehouseInstance.tasks(TASK_ID)).needQuantity;
+    assert(48, actualNeedQuant.toNumber())
+  })
 
-  // })
+  it("should revert when scanned quantity is greater than needed quantity", async () =>{
+    const warehouseInstance = await Warehouse.deployed();
+    try {
+      await warehouseInstance.verifyQuantity(99999, TASK_ID, "Iphone")
+    } catch(error) {
+      assert.equal( error.data.message, "revert")
+      return;
+    }
+    assert.fail("managed to over scan");
+  })
 
   
 });

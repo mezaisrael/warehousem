@@ -36,23 +36,31 @@ contract Warehouse {
     currentTask.user = msg.sender;
   }
 
-  function verifyItem(string calldata taskId, string calldata itemId) public view {
+  function verifyItem(string calldata taskId, string calldata itemId) public view returns (bool) {
 
     if (keccak256(abi.encodePacked(tasks[taskId].item)) != 
                   keccak256(abi.encodePacked(itemId))) {
       revert(); // the item must be part of the task
     }
+    return true;
   }
 
-  function verifyQuantity(uint quantity, string calldata itemId) public view {
-    if (inventory[itemId] < quantity) {
+  function verifyQuantity(uint scannedQuantity, string calldata taskId, string calldata itemId) public returns (bool){
+    // check for sufficient inventory
+    if (inventory[itemId] < scannedQuantity) {
       revert();
     }
 
-    if (tasks[itemId].needQuantity < quantity)
+    // check we dont verify more than needed for task
+    if (tasks[taskId].needQuantity < scannedQuantity)
     {
-      revert(); // too many item 
+      revert();
     }
+
+    inventory[itemId] -= scannedQuantity;
+    tasks[taskId].needQuantity -= scannedQuantity;
+
+    return true;
   }
 
   function addInventory(string calldata item, uint quantity) public {
